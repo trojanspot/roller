@@ -203,6 +203,7 @@
         const arcSize = (2 * Math.PI) / numSegments;
 
         for (let i = 0; i < numSegments; i++) {
+            // currentAngle ditambahkan agar roda berputar secara visual
             const angle = currentAngle + (i * arcSize);
             
             ctx.fillStyle = colors[i % colors.length];
@@ -226,7 +227,7 @@
         }
     }
 
-    // Fungsi menjalankan perputaran roda (Versi Mulus & Dramatis)
+    // Fungsi menjalankan perputaran roda (Sangat Mulus & Dramatis)
     function spinWheel() {
         if (isSpinning || names.length === 0) return;
 
@@ -234,55 +235,65 @@
         document.getElementById('spinBtn').disabled = true;
         document.getElementById('result').innerText = "Roda sedang berputar... 🎡";
 
-        /* 
-           --- PENGATURAN DRAMA & KECEPATAN ---
-           spinVelocity: Kecepatan awal. Dibuat tinggi (0.8 - 1.2) agar di awal berputar super kencang dan mulus.
-           friction: Gaya gesek diturunkan ke 0.993 (sebelumnya 0.985). 
-                     Makin mendekati 1, roda akan mengerem secara sangat halus/slow motion dan berputar lebih lama.
-        */
+        // Putaran awal dibuat kencang (0.8 - 1.2)
         let spinVelocity = Math.random() * 0.4 + 0.8; 
-        const friction = 0.993; 
+        const friction = 0.993; // Gaya gesek halus untuk pengereman slow-motion panjang
 
         function animate() {
-            currentAngle += spinVelocity; // Menggeser sudut roda
-            spinVelocity *= friction;     // Mengurangi kecepatan secara perlahan (efek ngerem)
+            currentAngle += spinVelocity; 
+            spinVelocity *= friction;     
 
-            drawWheel(); // Menggambar ulang setiap frame lewat requestAnimationFrame (60 FPS Mulus)
+            drawWheel(); 
 
-            // Batas berhenti diturunkan ke nilai sangat kecil agar drama detak-detak terakhir terasa nyata
             if (spinVelocity > 0.0005) {
                 requestAnimationFrame(animate);
             } else {
                 isSpinning = false;
-                document.getElementById('spinBtn').disabled = false;
                 calculateWinner();
             }
         }
         animate();
     }
 
-    // Fungsi menghitung pemenang
+    // Perbaikan Rumus Hitung Pemenang (Akurat 100% Sesuai Posisi Jarum Atas)
     function calculateWinner() {
         const numSegments = names.length;
         const arcSize = (2 * Math.PI) / numSegments;
         
-        let normalizedAngle = (1.5 * Math.PI - currentAngle) % (2 * Math.PI);
-        if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+        // Jarum berada di jam 12 (posisi sudut -90 derajat atau 1.5 * Math.PI)
+        // Kita hitung sudut relatif roda terhadap jarum penunjuk
+        let relativeAngle = (1.5 * Math.PI - currentAngle) % (2 * Math.PI);
+        if (relativeAngle < 0) relativeAngle += 2 * Math.PI;
 
-        const winnerIndex = Math.floor(normalizedAngle / arcSize);
+        const winnerIndex = Math.floor(relativeAngle / arcSize);
         const pemenang = names[winnerIndex];
 
+        // Tampilkan hasil pengumuman jawara
         const resultDiv = document.getElementById('result');
         resultDiv.style.color = "#06D6A0"; 
         resultDiv.innerText = "👑 " + pemenang + " 👑";
 
-        const updatedNames = names.filter(name => name !== pemenang);
-        document.getElementById('nameList').value = updatedNames.join('\n');
-        drawWheel(); 
+        /* 
+           SOLUSI ANTI MELOMPAT:
+           Berikan jeda waktu (delay) 2 detik bagi pengguna untuk melihat bahwa jarumnya 
+           memang benar menunjuk nama tersebut, baru kemudian namanya dieliminasi dari daftar.
+        */
+        setTimeout(() => {
+            // Aktifkan kembali tombol putar
+            document.getElementById('spinBtn').disabled = false;
+            
+            // Hapus nama pemenang dari kotak teks
+            const updatedNames = names.filter(name => name !== pemenang);
+            document.getElementById('nameList').value = updatedNames.join('\n');
+            
+            // Gambar ulang roda yang baru (sekarang transisinya bersih tanpa melompat saat berhenti)
+            drawWheel(); 
+        }, 2000); // 2000 milidetik = 2 detik jeda aman
     }
 
     drawWheel();
 </script>
+
 
 </body>
 </html>
