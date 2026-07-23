@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roda Berputar Misterius 🎉</title>
-    <!-- CSS akan diletakkan di sini -->
-    <style>
-    /* Tema latar belakang dunia anak cerah */
+    <title>Roda Berputar Realistis 🎉</title>
+    <!-- CSS diletakkan di bawah ini -->
+    
+</head><style>
     body { 
         font-family: 'Comic Sans MS', 'Chalkboard SE', Arial, sans-serif; 
         text-align: center; 
@@ -26,7 +26,6 @@
 
     p { color: #4A4A4A; font-weight: bold; }
 
-    /* Tata letak fleksibel membagi input dan roda */
     .main-wrapper {
         display: flex;
         flex-wrap: wrap;
@@ -79,7 +78,6 @@
     }
     button:disabled { background: #95a5a6; box-shadow: 0 5px 0px #7f8c8d; cursor: not-allowed; }
 
-    /* Komponen Visual Roda Berputar */
     .wheel-container {
         position: relative;
         width: 400px;
@@ -93,22 +91,33 @@
         background: #fff;
     }
 
-    /* Jarum penunjuk di bagian atas roda */
+    /* Modifikasi Jarum: Mengubah transform-origin ke bagian atas agar pangkalnya yang bergoyang */
     .pointer {
         position: absolute;
         top: -15px;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translateX(-50%) rotate(0deg);
+        transform-origin: top center;
         width: 0;
         height: 0;
         border-left: 20px solid transparent;
         border-right: 20px solid transparent;
-        border-top: 30px solid #FF3366;
+        border-top: 35px solid #FF3366;
         z-index: 10;
         filter: drop-shadow(0px 3px 2px rgba(0,0,0,0.3));
     }
 
-    /* Pin poros di tengah roda */
+    /* Efek animasi jarum terhentak/tergoyang saat dilewati garis */
+    .pointer.tick {
+        animation: pinBounce 0.1s ease-out;
+    }
+
+    @keyframes pinBounce {
+        0% { transform: translateX(-50%) rotate(0deg); }
+        30% { transform: translateX(-50%) rotate(-18deg); } /* Goyang ke kiri/terseret roda */
+        100% { transform: translateX(-50%) rotate(0deg); }  /* Kembali membal ke tengah */
+    }
+
     .center-pin {
         position: absolute;
         top: 50%;
@@ -123,7 +132,6 @@
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
-    /* Kotak Hasil Pengumuman */
     #result-box {
         margin: 30px auto 0 auto;
         padding: 15px;
@@ -144,7 +152,6 @@
     }
 </style>
 
-</head>
 <body>
 
     <h2>🎪 Roda Berputar Misterius 🎉</h2>
@@ -160,7 +167,8 @@
         
         <!-- Sisi Kanan: Area Roda Berputar -->
         <div class="wheel-container">
-            <div class="pointer"></div>
+            <!-- Jarum ditambahkan id "wheelPointer" untuk animasi CSS -->
+            <div id="wheelPointer" class="pointer"></div>
             <canvas id="wheelCanvas" width="400" height="400"></canvas>
             <div class="center-pin"></div>
         </div>
@@ -170,7 +178,7 @@
         <div id="result">Siapa yang beruntung? 🕵️‍♂️</div>
     </div>
 
-    <!-- JavaScript akan diletakkan di sini -->
+    <!-- JavaScript diletakkan di bawah ini -->
     <script>
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
@@ -179,8 +187,8 @@
     let currentAngle = 0;
     let isSpinning = false;
     let names = [];
+    let lastSegmentIndex = -1; // Melacak index segmen terakhir yang menyentuh jarum
 
-    // Fungsi menggambar roda berdasarkan nama input
     function drawWheel() {
         const rawText = document.getElementById('nameList').value;
         names = rawText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
@@ -203,7 +211,6 @@
         const arcSize = (2 * Math.PI) / numSegments;
 
         for (let i = 0; i < numSegments; i++) {
-            // currentAngle ditambahkan agar roda berputar secara visual
             const angle = currentAngle + (i * arcSize);
             
             ctx.fillStyle = colors[i % colors.length];
@@ -227,7 +234,6 @@
         }
     }
 
-    // Fungsi menjalankan perputaran roda (Sangat Mulus & Dramatis)
     function spinWheel() {
         if (isSpinning || names.length === 0) return;
 
@@ -235,9 +241,9 @@
         document.getElementById('spinBtn').disabled = true;
         document.getElementById('result').innerText = "Roda sedang berputar... 🎡";
 
-        // Putaran awal dibuat kencang (0.8 - 1.2)
         let spinVelocity = Math.random() * 0.4 + 0.8; 
-        const friction = 0.993; // Gaya gesek halus untuk pengereman slow-motion panjang
+        const friction = 0.993; 
+        const pointerEl = document.getElementById('wheelPointer');
 
         function animate() {
             currentAngle += spinVelocity; 
@@ -245,55 +251,66 @@
 
             drawWheel(); 
 
+            // --- LOGIKA JARUM GOYANG MEKANIS ---
+            const numSegments = names.length;
+            const arcSize = (2 * Math.PI) / numSegments;
+            // Hitung segmen mana yang saat ini sedang berada tepat di bawah jarum atas
+            let pointerAngle = (1.5 * Math.PI - currentAngle) % (2 * Math.PI);
+            if (pointerAngle < 0) pointerAngle += 2 * Math.PI;
+            const currentSegmentIndex = Math.floor(pointerAngle / arcSize);
+
+            // Jika indeks segmen berubah, berarti garis pembatas baru saja melewati jarum
+            if (currentSegmentIndex !== lastSegmentIndex) {
+                lastSegmentIndex = currentSegmentIndex;
+                
+                // Memicu ulang animasi CSS guncangan jarum (.tick)
+                pointerEl.classList.remove('tick');
+                void pointerEl.offsetWidth; // Trik memicu ulang pembacaan DOM agar animasi bisa berulang
+                pointerEl.classList.add('tick');
+            }
+
             if (spinVelocity > 0.0005) {
                 requestAnimationFrame(animate);
             } else {
                 isSpinning = false;
+                pointerEl.classList.remove('tick'); // Pastikan jarum lurus kembali saat berhenti
                 calculateWinner();
             }
         }
         animate();
     }
 
-    // Perbaikan Rumus Hitung Pemenang (Akurat 100% Sesuai Posisi Jarum Atas)
     function calculateWinner() {
         const numSegments = names.length;
         const arcSize = (2 * Math.PI) / numSegments;
         
-        // Jarum berada di jam 12 (posisi sudut -90 derajat atau 1.5 * Math.PI)
-        // Kita hitung sudut relatif roda terhadap jarum penunjuk
         let relativeAngle = (1.5 * Math.PI - currentAngle) % (2 * Math.PI);
         if (relativeAngle < 0) relativeAngle += 2 * Math.PI;
 
         const winnerIndex = Math.floor(relativeAngle / arcSize);
         const pemenang = names[winnerIndex];
 
-        // Tampilkan hasil pengumuman jawara
         const resultDiv = document.getElementById('result');
         resultDiv.style.color = "#06D6A0"; 
         resultDiv.innerText = "👑 " + pemenang + " 👑";
 
         /* 
-           SOLUSI ANTI MELOMPAT:
-           Berikan jeda waktu (delay) 2 detik bagi pengguna untuk melihat bahwa jarumnya 
-           memang benar menunjuk nama tersebut, baru kemudian namanya dieliminasi dari daftar.
+           PERUBAHAN WAKTU JEDA:
+           Jeda dinaikkan menjadi 4000ms (4 detik) agar nama pemenang dipajang lebih lama 
+           dan memberi kepuasan visual sebelum dieliminasi secara otomatis.
         */
         setTimeout(() => {
-            // Aktifkan kembali tombol putar
             document.getElementById('spinBtn').disabled = false;
             
-            // Hapus nama pemenang dari kotak teks
             const updatedNames = names.filter(name => name !== pemenang);
             document.getElementById('nameList').value = updatedNames.join('\n');
             
-            // Gambar ulang roda yang baru (sekarang transisinya bersih tanpa melompat saat berhenti)
             drawWheel(); 
-        }, 2000); // 2000 milidetik = 2 detik jeda aman
+        }, 4000); 
     }
 
     drawWheel();
 </script>
-
 
 </body>
 </html>
