@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Aplikasi Roller Acak Nama</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background: #f4f4f9; }
+        textarea { width: 300px; height: 150px; padding: 10px; font-size: 14px; }
+        button { padding: 10px 20px; font-size: 16px; background: #007BFF; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #0056b3; }
+        #result { font-size: 28px; font-weight: bold; margin-top: 20px; color: #333; min-height: 40px; }
+    </style>
+</head>
+<body>
+
+    <h2>Roller Acak Nama</h2>
+    <p>Masukkan satu nama per baris di bawah ini:</p>
+    
+    <textarea id="nameList" placeholder="Contoh:&#10;Andi&#10;Budi&#10;Cici"></textarea><br>
+    
+    <button onclick="startRoll()">Mulai Acak</button>
+    
+    <div id="result"></div>
+
+    <script>
+        function startRoll() {
+            const rawText = document.getElementById('nameList').value;
+            const names = rawText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
+            const resultDiv = document.getElementById('result');
+
+            if (names.length === 0) {
+                resultDiv.innerText = "Masukkan setidaknya satu nama!";
+                return;
+            }
+
+            let counter = 0;
+            const maxCount = 20; // Jumlah perputaran sebelum berhenti
+            const interval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * names.length);
+                resultDiv.innerText = names[randomIndex];
+                counter++;
+
+                if (counter >= maxCount) {
+                    clearInterval(interval);
+                }
+            }, 100); // Kecepatan ganti nama dalam milidetik
+        }
+    </script>
+
+</body>
+</html>
